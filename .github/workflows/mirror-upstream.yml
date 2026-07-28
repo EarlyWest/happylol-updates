@@ -1,0 +1,130 @@
+name: Mirror upstream skin data
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mirror-upstream-skins
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Inspect upstream
+        id: inspect
+        shell: python
+        run: |
+          import json
+          import os
+          import urllib.request
+
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Alban1911/LeagueSkins/commits?per_page=1",
+              headers={"Accept": "application/vnd.github+json", "User-Agent": "HappyLOL-Mirror/1"},
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              latest = json.load(response)[0]["sha"]
+          try:
+              with open("upstream.json", "r", encoding="utf-8") as stream:
+                  current = json.load(stream).get("sha", "")
+          except FileNotFoundError:
+              current = ""
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
+              stream.write(f"sha={latest}\n")
+              stream.write(f"short={latest[:12]}\n")
+              stream.write(f"changed={'true' if latest != current else 'false'}\n")
+
+      - name: Build mirror archive
+        if: steps.inspect.outputs.changed == 'true'
+        id: archive
+        shell: python
+        env:
+          UPSTREAM_SHA: ${{ steps.inspect.outputs.sha }}
+        run: |
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import shutil
+          import urllib.request
+          import zipfile
+
+          root = pathlib.Path.cwd()
+          work = root / ".mirror-work"
+          source_zip = work / "source.zip"
+          extract = work / "extract"
+          package = work / "HappyLOLData"
+          shutil.rmtree(work, ignore_errors=True)
+          extract.mkdir(parents=True)
+          urllib.request.urlretrieve(
+              f"https://codeload.github.com/Alban1911/LeagueSkins/zip/{os.environ['UPSTREAM_SHA']}",
+              source_zip,
+          )
+          with zipfile.ZipFile(source_zip) as archive:
+              archive.extractall(extract)
+          source = next(extract.iterdir())
+          for name in ("resources", "skins"):
+              shutil.copytree(source / name, package / name)
+          state = package / ".happylol-sync"
+          state.mkdir(parents=True)
+          (state / "commit.txt").write_text(os.environ["UPSTREAM_SHA"] + "\n", encoding="ascii")
+          output = root / f"HappyLOLData-upstream-{os.environ['UPSTREAM_SHA'][:12]}.zip"
+          with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+              for path in package.rglob("*"):
+                  if path.is_file():
+                      archive.write(path, path.relative_to(package))
+          digest = hashlib.sha256(output.read_bytes()).hexdigest()
+          metadata = {
+              "schema": 1,
+              "sha": os.environ["UPSTREAM_SHA"],
+              "archive": output.name,
+              "sha256": digest,
+              "size": output.stat().st_size,
+          }
+          (root / "upstream.json").write_text(
+              json.dumps(metadata, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
+          )
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
+              stream.write(f"file={output.name}\n")
+
+      - name: Publish mirror release
+        if: steps.inspect.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: upstream-${{ steps.inspect.outputs.short }}
+          FILE: ${{ steps.archive.outputs.file }}
+          SHA: ${{ steps.inspect.outputs.sha }}
+        run: |
+          gh release create "$TAG" "$FILE" --title "Upstream skin data $SHA" --notes "Automated HappyLOL fallback mirror of Alban1911/LeagueSkins commit $SHA."
+
+      - name: Record mirror metadata
+        if: steps.inspect.outputs.changed == 'true'
+        env:
+          TAG: upstream-${{ steps.inspect.outputs.short }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          with open("upstream.json", "r", encoding="utf-8") as stream:
+              data = json.load(stream)
+          data["url"] = f"https://github.com/{os.environ['REPOSITORY']}/releases/download/{os.environ['TAG']}/{data['archive']}"
+          with open("upstream.json", "w", encoding="utf-8") as stream:
+              json.dump(data, stream, indent=2, ensure_ascii=True)
+              stream.write("\n")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add upstream.json
+          git commit -m "Mirror LeagueSkins ${{ steps.inspect.outputs.short }}"
+          git push
