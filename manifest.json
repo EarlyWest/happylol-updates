@@ -1,20 +1,17 @@
 ﻿{
-  "schema": 2,
-  "data_version": "20260728T040001Z",
-  "game_versions": ["26.15"],
-  "min_backend_api": 1,
-  "published_at": "2026-07-28T16:00:00+08:00",
-  "full_archive": {
-    "url": "https://github.com/EarlyWest/happylol-updates/releases/download/data-20260728T040001Z/HappyLOLData-20260728T040001Z.zip",
-    "sha256": "054350b5ea442c5cb37225c0c51fdad43febf8e37df1ac183318cac4236c491e",
-    "size": 155131371
-  },
-  "files": [
-    {
-      "path": "skins/.manifest_skins.json",
-      "url": "https://raw.githubusercontent.com/EarlyWest/happylol-updates/main/skin-files.json",
-      "sha256": "",
-      "size": 0
-    }
-  ]
+    "schema":  2,
+    "data_version":  "20260728T040001Z",
+    "game_versions":  [
+                          "26.15"
+                      ],
+    "min_backend_api":  1,
+    "published_at":  "2026-07-28T16:00:00+08:00",
+    "full_archive":  {
+                         "url":  "https://github.com/EarlyWest/happylol-updates/releases/download/data-20260728T040001Z/HappyLOLData-20260728T040001Z.zip",
+                         "sha256":  "054350b5ea442c5cb37225c0c51fdad43febf8e37df1ac183318cac4236c491e",
+                         "size":  155131371
+                     },
+    "files":  [
+
+              ]
 }
