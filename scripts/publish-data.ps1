@@ -44,6 +44,7 @@ $manifest = [ordered]@{
     game_versions = $GameVersions
     min_backend_api = 1
     published_at = (Get-Date).ToUniversalTime().ToString('o')
+    announcement = "HappyLOL 数据 $stamp 已发布，包含最新普通皮肤与炫彩资源。"
     full_archive = [ordered]@{
         url = "https://github.com/$Repository/releases/download/$tag/$archiveName"
         sha256 = $hash
