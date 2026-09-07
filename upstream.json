@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "sha": "babeba4628dc96ac61e0db51492f5d23086a93f0",
-  "archive": "HappyLOLData-upstream-babeba4628dc.zip",
-  "sha256": "ce58dc0df802769f0401e850fe191e7761b14c1e5b6ee4820be3b8817a1554ca",
-  "size": 127846214,
-  "url": "https://github.com/EarlyWest/happylol-updates/releases/download/upstream-babeba4628dc/HappyLOLData-upstream-babeba4628dc.zip"
+  "sha": "50b9390d88b3903525b572b3417347e0672cb120",
+  "archive": "HappyLOLData-upstream-50b9390d88b3.zip",
+  "sha256": "89d7cc306b3a7ab436a52d49c2e0f6b454546f870dd2b73c9078819c57391d92",
+  "size": 139623530,
+  "url": "https://github.com/EarlyWest/happylol-updates/releases/download/upstream-50b9390d88b3/HappyLOLData-upstream-50b9390d88b3.zip"
 }
